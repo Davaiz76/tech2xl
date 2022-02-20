@@ -10,6 +10,7 @@
 # usage: python tech2xl <Excel output file> <inputfile>...
 #
 # Author: Andres Gonzelez, dec 2015
+# Modified by : Davaiz, Feb 2022
 
 import re, glob, sys, csv, collections
 import xlwt
@@ -34,7 +35,7 @@ def expand_string(s, list):
     return result[1:]
 
 start_time = time.time()
-print("tech2xl v1.5")
+print("tech2xl v1.6")
 
 if len(sys.argv) < 3:
     print("Usage: tech2xl <output file> <input files>...")
@@ -46,7 +47,7 @@ commands = [["show"], \
             ["detail"]]
 
 
-int_types = ["Ethernet", "FastEthernet", "GigabitEthernet", "Gigabit", "TenGigabit", "Serial", "ATM", "Port-channel", "Tunnel", "Loopback"]
+int_types = ["Ethernet", "FastEthernet", "GigabitEthernet", "Gigabit", "TenGigabit", "Serial", "ATM", "Port-channel", "Tunnel", "Loopback", "AppGigabitEthernet"]
 
 # Inicialized the collections.OrderedDictionary that will store all the info
 systeminfo = collections.OrderedDict()
@@ -55,7 +56,7 @@ cdpinfo = collections.OrderedDict()
 diaginfo = collections.OrderedDict()
 
 #These are the fields to be extracted
-systemfields = ["Name", "Model", "System ID", "Mother ID", "Image"]
+systemfields = ["Name", "Model", "System ID", "Mother ID", "Image","Restart","Uptime"]
 
 intfields = ["Name", \
             "Interface", \
@@ -85,7 +86,11 @@ intfields = ["Name", \
             "DLCI", \
             "Duplex", \
             "Speed", \
-            "Media type"]   
+            "Media type",
+            "Reset Counter",
+            "Reliability",
+            "Txload",
+            "Rxload"]   
 
 cdpfields = ["Name", "Local interface", "Remote device name", "Remote device domain", "Remote interface", "Remote device IP"]
 
@@ -272,25 +277,30 @@ for arg in sys.argv[2:]:
                 if m:
                     systeminfo[name]['Mother ID'] = m.group(1)
                     continue
+                #DBT
+                m = re.search("Motherboard Serial Number\s*: (.*)", line)
+                if m:
+                    systeminfo[name]['Mother ID'] = m.group(1)
+                    continue
 
-                m = re.search('System image file is \"flash:\/?(.*)\.bin\"', line)
+                m = re.search("Cisco IOS Software (.*)", line)
+                if m:
+                    systeminfo[name]['Image'] = m.group(1)
+                    continue
+                
+                m = re.search("Cisco IOS Software, (.*)", line)
                 if m:
                     systeminfo[name]['Image'] = m.group(1)
                     continue
 
-                m = re.search('System image file is \"flash:\/.*\/(.*)\.bin\"', line)
+                m = re.search("System restarted at (.*)", line)
                 if m:
-                    systeminfo[name]['Image'] = m.group(1)
+                    systeminfo[name]['Restart'] = m.group(1)
                     continue
-
-                m = re.search('System image file is \"bootflash:(.*)\.bin\"', line)
+                
+                m = re.search("\S+ uptime is (.*)", line)
                 if m:
-                    systeminfo[name]['Image'] = m.group(1)
-                    continue
-
-                m = re.search('System image file is \"sup-bootflash:(.*)\.bin\"', line)
-                if m:
-                    systeminfo[name]['Image'] = m.group(1)
+                    systeminfo[name]['Uptime'] = m.group(1)
                     continue
 
             # processes "show interfaces" command or section of sh tech
@@ -399,8 +409,18 @@ for arg in sys.argv[2:]:
                     intinfo[name][item]['Speed'] = m.group(2)
                     intinfo[name][item]['Media type'] = m.group(3)
                     continue
+                
+                m = re.search("Last clearing of \"show interface\" counters (.*)", line)
+                if m:
+                    intinfo[name][item]['Reset Counter'] = m.group(1)
+                    continue
 
-
+                m = re.search("reliability (.*), txload(.*), rxload(.*)", line)
+                if m:
+                    intinfo[name][item]['Reliability'] = m.group(1)
+                    intinfo[name][item]['Txload'] = m.group(2)
+                    intinfo[name][item]['Rxload'] = m.group(3)
+                    continue
 
             # processes "show interfaces status" command or section of sh tech
             if command == 'show interfaces status' and name != '':
@@ -510,23 +530,9 @@ for arg in sys.argv[2:]:
             # processes "show inventory" command
             if command == 'show inventory' and name != '':
 
+                   
                 # extracts information as per patterns
-                m = re.search('NAME: .* on Slot (\d+) SubSlot (\d+)\", DESCR: \"(.+)\"', line)
-                if m:
-                    slot = m.group(1)
-                    subslot = m.group(2)
-                    item = slot + '-' + subslot
-                    if (name + item) not in diaginfo.keys():
-                        diaginfo[name + item] = collections.OrderedDict(zip(diagfields, [''] * len(diagfields)))
-                    diaginfo[name + item]['Name'] = name
-                    diaginfo[name + item]['Slot'] = slot
-                    diaginfo[name + item]['Subslot'] = subslot
-                    diaginfo[name + item]['Description'] = m.group(3)
-
-                    continue
-                    
-                # extracts information as per patterns
-                m = re.search('NAME: .* on Slot (\d+)\", DESCR: \"(.+)\"', line)
+                m = re.search('NAME: \"(.*)\", DESCR: \"(.*)\"', line)
                 if m:
                     slot = m.group(1)
                     subslot = ''
