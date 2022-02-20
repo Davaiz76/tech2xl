@@ -277,7 +277,7 @@ for arg in sys.argv[2:]:
                 if m:
                     systeminfo[name]['Mother ID'] = m.group(1)
                     continue
-                #DBT
+                    
                 m = re.search("Motherboard Serial Number\s*: (.*)", line)
                 if m:
                     systeminfo[name]['Mother ID'] = m.group(1)
