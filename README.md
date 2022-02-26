@@ -1,15 +1,16 @@
-# tech2xl
-Python script to extract info from Cisco devices commands and create an Excel file
-Version 1.0
-Author: Andrés González
+# tech2xl2
+Python script to extract info from Cisco devices commands and create an Excel file. 
+Credit to Andres Gonzelez for creating the original script. https://github.com/angonz/tech2xl
+Version 2.0
+Author: David BROQUET
 
 Usage
 -----
 
-python tech2xl <output excel filename> <input text files>...
+python tech2xl2 <output excel filename> <input text files>...
 
 Example: 
->python tech2xl report.xls show_tech.txt
+>python tech2xl2 report.xls show_tech.txt
 
 Requirements and installation
 -----------------------------
@@ -17,11 +18,10 @@ Requirements and installation
 Requires python 3.5
 Requires xlwt-future library (download from https://pypi.python.org/pypi/xlwt-future)
 
-
 How it works
 ------------
 
-tech2xl parses the text of the input files looking for certain information. Then it creates an Excel file with this information organized in sheets.
+tech2xl2 parses the text of the input files looking for certain information. Then it creates an Excel file with this information organized in sheets.
 At the input file, it will look for the command line to extract the hostname. For example, a line like this must be present:
   router#show tech
 
@@ -50,6 +50,7 @@ The ouput will be an Excel file containing the following sheets:
 - System: general information of each device
 - Interfaces: information of each interface of each device
 - CDP neighbors: information of neighbors detected by CDP
+- Modules : information of each module of each device
 
 The sheets will contain the following information:
 
@@ -107,5 +108,14 @@ Modules sheet:
 - Subslot: where in main slot is the module
 - Description: of the module
 - Part number: of the module
+- Version of the module  
 - Serial number: of the module
 
+Evolution from tech2xl :
+  
+  - Add a new false positive in "show platform" section of "show tech" for the hostname (Cisco 9200/9300)
+  - Add a new type of interface AppGigabitEthernet (Cisco 9200/9300)
+  - Add the last the restart date, the uptime,  the Motherboard Serial Number, the IOS Software, the Mother ID of the switch
+  - Add the last reset counter time, reliability, Txload, Rxload of each interface
+  - Add the version of the sfp module
+  
