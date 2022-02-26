@@ -11,6 +11,8 @@ python tech2xl2 <output excel filename> <input text files>...
 
 Example: 
 >python tech2xl2 report.xls show_tech.txt
+  or
+>python tech2xl2 report.xls *.txt
 
 Requirements and installation
 -----------------------------
