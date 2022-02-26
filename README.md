@@ -54,7 +54,7 @@ The ouput will be an Excel file containing the following sheets:
 - System: general information of each device
 - Interfaces: information of each interface of each device
 - CDP neighbors: information of neighbors detected by CDP
-- Modules : information of each module of each device
+- Modules : information of each modules of each device
 
 The sheets will contain the following information:
 
@@ -65,6 +65,8 @@ System sheet:
 - System ID: System serial number
 - Mother ID: Motherboard serial number
 - Image: filename of the system IOS
+- Restart : date of the last restart
+- Uptime : time since the last starting
 
 Interfaces sheet:
 
@@ -96,7 +98,12 @@ Interfaces sheet:
 - DLCI: for frame relay subinterfaces
 - Duplex: duplex of ethernet interfaces (full, half, auto, a-full, a-half). a-full and a-half are auto duplex with duplex detected.
 - Speed: speed of ethernet interfaces (10, 100, 1000, auto, a-10, a-100, a-1000, etc.). a-NNN are auto speed with speed detected.
-
+- Media type: Media type of the interfaces (10/100/1000BaseTX, 1000BaseSX SFP, etc)
+- Reset counter: time since the counters have been reset
+- Reliability: reliabilty of the interfaces
+- Tx load : the load of transmission of the interfaces
+- Rx load : the load of receiving of the interfaces
+ 
 CDP neigbors sheet:
 
 - Name: hostname of local device
@@ -112,7 +119,7 @@ Modules sheet:
 - Subslot: where in main slot is the module
 - Description: of the module
 - Part number: of the module
-- Version of the module  
+- Version: of the module  
 - Serial number: of the module
 
 Evolution from tech2xl :
