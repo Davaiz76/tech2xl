@@ -126,7 +126,7 @@ Evolution from tech2xl :
   
   - Add a new false positive in "show platform" section of "show tech" for the hostname (Cisco 9200/9300)
   - Add a new type of interface AppGigabitEthernet (Cisco 9200/9300)
-  - Add the last the restart date, the uptime,  the Motherboard Serial Number, the IOS Software, the Mother ID of the switch
+  - Add the last the restart date, the uptime of the device
   - Add the last reset counter time, reliability, Txload, Rxload of each interface
   - Add the version of the sfp module
   
