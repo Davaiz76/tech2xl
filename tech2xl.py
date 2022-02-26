@@ -1,4 +1,4 @@
-# tech2xl
+# tech2xl2
 #
 # Parses a file containing one or more show tech of Cisco devices
 # and extracts system information. Then it writes to an Excel file
@@ -7,10 +7,11 @@
 #
 # Requires xlwt library. For Python 3, use xlwt-future (https://pypi.python.org/pypi/xlwt-future)
 #
-# usage: python tech2xl <Excel output file> <inputfile>...
+# usage: python tech2xl2 <Excel output file> <inputfile1> <inputfile2> ...
 #
-# Author: Andres Gonzelez, dec 2015
-# Modified by : Davaiz, Feb 2022
+# Credit to Andres Gonzelez for creating the original script
+# https://github.com/angonz/tech2xl
+# Author: David BROQUET, feb 2022
 
 import re, glob, sys, csv, collections
 import xlwt
@@ -35,10 +36,10 @@ def expand_string(s, list):
     return result[1:]
 
 start_time = time.time()
-print("tech2xl v1.6")
+print("tech2xl2 v1.0")
 
 if len(sys.argv) < 3:
-    print("Usage: tech2xl <output file> <input files>...")
+    print("Usage: tech2xl2 <output file> <input files>...")
     sys.exit(2)
 
 commands = [["show"], \
@@ -49,7 +50,7 @@ commands = [["show"], \
 
 int_types = ["Ethernet", "FastEthernet", "GigabitEthernet", "Gigabit", "TenGigabit", "Serial", "ATM", "Port-channel", "Tunnel", "Loopback", "AppGigabitEthernet"]
 
-# Inicialized the collections.OrderedDictionary that will store all the info
+# Initialize the collections.OrderedDictionary that will store all the info
 systeminfo = collections.OrderedDict()
 intinfo = collections.OrderedDict()
 cdpinfo = collections.OrderedDict()
@@ -94,7 +95,7 @@ intfields = ["Name", \
 
 cdpfields = ["Name", "Local interface", "Remote device name", "Remote device domain", "Remote interface", "Remote device IP"]
 
-diagfields = ["Name", "Slot", "Subslot", "Description", "Serial number", "Part number"]
+diagfields = ["Name", "Slot", "Subslot", "Description", "Serial number", "Version", "Part number"]
 
 masks = ["128.0.0.0","192.0.0.0","224.0.0.0","240.0.0.0","248.0.0.0","252.0.0.0","254.0.0.0","255.0.0.0","255.128.0.0","255.192.0.0","255.224.0.0","255.240.0.0","255.248.0.0","255.252.0.0","255.254.0.0","255.255.0.0","255.255.128.0","255.255.192.0","255.255.224.0","255.255.240.0","255.255.248.0","255.255.252.0","255.255.254.0","255.255.255.0","255.255.255.128","255.255.255.192","255.255.255.224","255.255.255.240","255.255.255.248","255.255.255.252","255.255.255.254","255.255.255.255"]
 
@@ -109,7 +110,7 @@ for arg in sys.argv[2:]:
         # This is the name of the router
         name = ''
 
-        # Identifies the section of the file that is currently being read
+        # Identify the section of the file that is currently being read
         command = ''
         section = ''
         item = ''
@@ -121,8 +122,8 @@ for arg in sys.argv[2:]:
 
             # checks for device name in prompt
             m = re.search("^([a-zA-Z0-9][a-zA-Z0-9_\-\.]*)[#>]\s*([\w\-\_\s\b\a]*)", line)
-            # avoids a false positive in the "show switch detail" or "show flash: all" section of show tech
-            if m and not (command == "show switch detail" or command == "show flash: all"):
+            # avoid a false positive in the "show switch detail" or "show flash: all" section of show tech
+            if m and not (command == "show switch detail" or command == "show flash: all" or command == "show platform"):
 
                 if name == '':
                     infile.seek(0)
@@ -277,17 +278,37 @@ for arg in sys.argv[2:]:
                 if m:
                     systeminfo[name]['Mother ID'] = m.group(1)
                     continue
-                    
+
                 m = re.search("Motherboard Serial Number\s*: (.*)", line)
                 if m:
                     systeminfo[name]['Mother ID'] = m.group(1)
+                    continue
+
+                m = re.search('System image file is \"flash:\/?(.*)\.bin\"', line)
+                if m:
+                    systeminfo[name]['Image'] = m.group(1)
+                    continue
+
+                m = re.search('System image file is \"flash:\/.*\/(.*)\.bin\"', line)
+                if m:
+                    systeminfo[name]['Image'] = m.group(1)
+                    continue
+
+                m = re.search('System image file is \"bootflash:(.*)\.bin\"', line)
+                if m:
+                    systeminfo[name]['Image'] = m.group(1)
+                    continue
+
+                m = re.search('System image file is \"sup-bootflash:(.*)\.bin\"', line)
+                if m:
+                    systeminfo[name]['Image'] = m.group(1)
                     continue
 
                 m = re.search("Cisco IOS Software (.*)", line)
                 if m:
                     systeminfo[name]['Image'] = m.group(1)
                     continue
-                
+
                 m = re.search("Cisco IOS Software, (.*)", line)
                 if m:
                     systeminfo[name]['Image'] = m.group(1)
@@ -297,7 +318,7 @@ for arg in sys.argv[2:]:
                 if m:
                     systeminfo[name]['Restart'] = m.group(1)
                     continue
-                
+
                 m = re.search("\S+ uptime is (.*)", line)
                 if m:
                     systeminfo[name]['Uptime'] = m.group(1)
@@ -532,6 +553,48 @@ for arg in sys.argv[2:]:
 
                    
                 # extracts information as per patterns
+                m = re.search('NAME: .* on Slot (\d+) SubSlot (\d+)\", DESCR: \"(.+)\"', line)
+                if m:
+                    slot = m.group(1)
+                    subslot = m.group(2)
+                    item = slot + '-' + subslot
+                    if (name + item) not in diaginfo.keys():
+                        diaginfo[name + item] = collections.OrderedDict(zip(diagfields, [''] * len(diagfields)))
+                    diaginfo[name + item]['Name'] = name
+                    diaginfo[name + item]['Slot'] = slot
+                    diaginfo[name + item]['Subslot'] = subslot
+                    diaginfo[name + item]['Description'] = m.group(3)
+
+                    continue
+
+                # extracts information as per patterns
+                m = re.search('NAME: .* on Slot (\d+)\", DESCR: \"(.+)\"', line)
+                if m:
+                    slot = m.group(1)
+                    subslot = ''
+                    item = slot
+                    if (name + item) not in diaginfo.keys():
+                        diaginfo[name + item] = collections.OrderedDict(zip(diagfields, [''] * len(diagfields)))
+                    diaginfo[name + item]['Name'] = name
+                    diaginfo[name + item]['Slot'] = slot
+                    diaginfo[name + item]['Subslot'] = subslot
+                    diaginfo[name + item]['Description'] = m.group(2)
+
+                    continue
+                    
+                m = re.search('PID: (.*)\s*, VID: (.*), SN: (\S+)', line)
+                if m and item != '':
+                    diaginfo[name + item]['Name'] = name
+                    diaginfo[name + item]['Slot'] = slot
+                    diaginfo[name + item]['Subslot'] = subslot
+                    diaginfo[name + item]['Part number'] = m.group(1)
+                    diaginfo[name + item]['Version'] = m.group(2)
+                    diaginfo[name + item]['Serial number'] = m.group(3)
+
+                    continue
+
+
+                
                 m = re.search('NAME: \"(.*)\", DESCR: \"(.*)\"', line)
                 if m:
                     slot = m.group(1)
