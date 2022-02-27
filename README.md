@@ -1,15 +1,20 @@
-# tech2xl
-Python script to extract info from Cisco devices commands and create an Excel file
-Version 1.0
-Author: Andrés González
+# tech2xl2
+Python script to extract info from Cisco devices commands and create an Excel file. 
+Credit to Andres Gonzelez for creating the original script. https://github.com/angonz/tech2xl
+Version 2.0
+Author: David BROQUET
 
 Usage
 -----
 
-python tech2xl <output excel filename> <input text files>...
+python tech2xl2 <output excel filename> <input text files>...
 
 Example: 
->python tech2xl report.xls show_tech.txt
+>python tech2xl2 report.xls show_tech.txt
+
+ or
+
+ >python tech2xl2 report.xls *.txt
 
 Requirements and installation
 -----------------------------
@@ -17,11 +22,10 @@ Requirements and installation
 Requires python 3.5
 Requires xlwt-future library (download from https://pypi.python.org/pypi/xlwt-future)
 
-
 How it works
 ------------
 
-tech2xl parses the text of the input files looking for certain information. Then it creates an Excel file with this information organized in sheets.
+tech2xl2 parses the text of the input files looking for certain information. Then it creates an Excel file with this information organized in sheets.
 At the input file, it will look for the command line to extract the hostname. For example, a line like this must be present:
   router#show tech
 
@@ -50,6 +54,7 @@ The ouput will be an Excel file containing the following sheets:
 - System: general information of each device
 - Interfaces: information of each interface of each device
 - CDP neighbors: information of neighbors detected by CDP
+- Modules : information of each modules of each device
 
 The sheets will contain the following information:
 
@@ -60,6 +65,8 @@ System sheet:
 - System ID: System serial number
 - Mother ID: Motherboard serial number
 - Image: filename of the system IOS
+- Restart : date of the last restart
+- Uptime : time since the last starting
 
 Interfaces sheet:
 
@@ -91,7 +98,12 @@ Interfaces sheet:
 - DLCI: for frame relay subinterfaces
 - Duplex: duplex of ethernet interfaces (full, half, auto, a-full, a-half). a-full and a-half are auto duplex with duplex detected.
 - Speed: speed of ethernet interfaces (10, 100, 1000, auto, a-10, a-100, a-1000, etc.). a-NNN are auto speed with speed detected.
-
+- Media type: Media type of the interfaces (10/100/1000BaseTX, 1000BaseSX SFP, etc)
+- Reset counter: time since the counters have been reset
+- Reliability: reliabilty of the interfaces
+- Tx load : the load of transmission of the interfaces
+- Rx load : the load of receiving of the interfaces
+ 
 CDP neigbors sheet:
 
 - Name: hostname of local device
@@ -107,5 +119,14 @@ Modules sheet:
 - Subslot: where in main slot is the module
 - Description: of the module
 - Part number: of the module
+- Version: of the module  
 - Serial number: of the module
 
+Evolution from tech2xl :
+  
+  - Add a new false positive in "show platform" section of "show tech" for the hostname (Cisco 9200/9300)
+  - Add a new type of interface AppGigabitEthernet (Cisco 9200/9300)
+  - Add the last the restart date, the uptime of the device
+  - Add the last reset counter time, reliability, Txload, Rxload of each interface
+  - Add the version of the sfp module
+  
