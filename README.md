@@ -1,7 +1,10 @@
 # tech2xl
 Python script to extract info from Cisco devices commands and create an Excel file. 
+
 Credit to Andres Gonzelez for creating the original script. https://github.com/angonz/tech2xl
+
 Version 1.6
+
 Author: David BROQUET
 
 Usage
