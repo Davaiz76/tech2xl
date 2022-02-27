@@ -1,20 +1,20 @@
-# tech2xl2
+# tech2xl
 Python script to extract info from Cisco devices commands and create an Excel file. 
 Credit to Andres Gonzelez for creating the original script. https://github.com/angonz/tech2xl
-Version 2.0
+Version 1.6
 Author: David BROQUET
 
 Usage
 -----
 
-python tech2xl2 <output excel filename> <input text files>...
+python tech2xl <output excel filename> <input text files>...
 
 Example: 
->python tech2xl2 report.xls show_tech.txt
+>python tech2xl report.xls show_tech.txt
 
  or
 
- >python tech2xl2 report.xls *.txt
+ >python tech2xl report.xls *.txt
 
 Requirements and installation
 -----------------------------
@@ -25,7 +25,7 @@ Requires xlwt-future library (download from https://pypi.python.org/pypi/xlwt-fu
 How it works
 ------------
 
-tech2xl2 parses the text of the input files looking for certain information. Then it creates an Excel file with this information organized in sheets.
+tech2xl parses the text of the input files looking for certain information. Then it creates an Excel file with this information organized in sheets.
 At the input file, it will look for the command line to extract the hostname. For example, a line like this must be present:
   router#show tech
 
