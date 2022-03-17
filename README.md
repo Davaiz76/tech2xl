@@ -48,6 +48,7 @@ Commands (and sections of a "show technical-support") supported
 - show cdp neighbors detail
 - show diag
 - show inventory
+- show log
 
 Excel file output format
 ------------------------
@@ -58,6 +59,7 @@ The ouput will be an Excel file containing the following sheets:
 - Interfaces: information of each interface of each device
 - CDP neighbors: information of neighbors detected by CDP
 - Modules : information of each modules of each device
+- Logs : collect logs of each switch
 
 The sheets will contain the following information:
 
@@ -124,6 +126,13 @@ Modules sheet:
 - Part number: of the module
 - Version: of the module  
 - Serial number: of the module
+ 
+Logs sheet:
+
+- Name: hostname of local device
+- Timelog : date and time of the log
+- Typelog : type of the log
+- Messagelog : Message of the log
 
 Evolution from tech2xl :
   
@@ -132,4 +141,4 @@ Evolution from tech2xl :
   - Add the last the restart date, the uptime of the device
   - Add the last reset counter time, reliability, Txload, Rxload of each interface
   - Add the version of the sfp module
-  
+  - Add a new sheet for the logs  
