@@ -1,4 +1,4 @@
-# tech2xl2
+# tech2xl
 #
 # Parses a file containing one or more show tech of Cisco devices
 # and extracts system information. Then it writes to an Excel file
@@ -7,7 +7,7 @@
 #
 # Requires xlwt library. For Python 3, use xlwt-future (https://pypi.python.org/pypi/xlwt-future)
 #
-# usage: python tech2xl2 <Excel output file> <inputfile1> <inputfile2> ...
+# usage: python tech2xl <Excel output file> <inputfile1> <inputfile2> ...
 #
 # Credit to Andres Gonzelez for creating the original script
 # https://github.com/angonz/tech2xl
@@ -36,10 +36,10 @@ def expand_string(s, list):
     return result[1:]
 
 start_time = time.time()
-print("tech2xl2 v1.0")
+print("tech2xl v1.0")
 
 if len(sys.argv) < 3:
-    print("Usage: tech2xl2 <output file> <input files>...")
+    print("Usage: tech2xl <output file> <input files>...")
     sys.exit(2)
 
 commands = [["show"], \
@@ -55,6 +55,7 @@ systeminfo = collections.OrderedDict()
 intinfo = collections.OrderedDict()
 cdpinfo = collections.OrderedDict()
 diaginfo = collections.OrderedDict()
+loginfo = collections.OrderedDict()
 
 #These are the fields to be extracted
 systemfields = ["Name", "Model", "System ID", "Mother ID", "Image","Restart","Uptime"]
@@ -96,6 +97,8 @@ intfields = ["Name", \
 cdpfields = ["Name", "Local interface", "Remote device name", "Remote device domain", "Remote interface", "Remote device IP"]
 
 diagfields = ["Name", "Slot", "Subslot", "Description", "Serial number", "Version", "Part number"]
+
+logfields = ["Name", "Timelog", "Typelog", "Messagelog"]
 
 masks = ["128.0.0.0","192.0.0.0","224.0.0.0","240.0.0.0","248.0.0.0","252.0.0.0","254.0.0.0","255.0.0.0","255.128.0.0","255.192.0.0","255.224.0.0","255.240.0.0","255.248.0.0","255.252.0.0","255.254.0.0","255.255.0.0","255.255.128.0","255.255.192.0","255.255.224.0","255.255.240.0","255.255.248.0","255.255.252.0","255.255.254.0","255.255.255.0","255.255.255.128","255.255.255.192","255.255.255.224","255.255.255.240","255.255.255.248","255.255.255.252","255.255.255.254","255.255.255.255"]
 
@@ -150,6 +153,9 @@ for arg in sys.argv[2:]:
                 if name not in cdpinfo.keys():
                     cdpinfo[name] = collections.OrderedDict()
 
+                if name not in loginfo.keys():
+                    loginfo[name] = collections.OrderedDict()
+
                 continue
 
             # detects section within show tech
@@ -182,6 +188,9 @@ for arg in sys.argv[2:]:
 
                         if name not in cdpinfo.keys():
                             cdpinfo[name] = collections.OrderedDict()
+                            
+                        if name not in loginfo.keys():
+                            loginfo[name] = collections.OrderedDict()                            
 
                     continue
 
@@ -475,7 +484,20 @@ for arg in sys.argv[2:]:
                         intinfo[name][item]['Speed'] = m.group(5)
                         intinfo[name][item]['Media type'] = m.group(6)
 
-                        
+            # processes "show logging" command or section of sh tech
+            if command == 'show logging' and name != '':                       
+
+                m = re.search("(.*?): (.*?): (.*)", line)
+                if m:
+                    item = m.group(1)
+					
+                    if item is not None:
+                        if item not in loginfo[name].keys():
+                            loginfo[name][item] = collections.OrderedDict(zip(logfields, [''] * len(logfields)))
+                            loginfo[name][item]['Name'] = name
+                            loginfo[name][item]['Timelog'] = m.group(1)
+                            loginfo[name][item]['Typelog'] = m.group(2)
+                            loginfo[name][item]['Messagelog'] = m.group(3)
 
             # processes "show CDP neighbors" command or section of sh tech
             if command == 'show cdp neighbors' and name != '':
@@ -795,7 +817,7 @@ if cont > 0:
                     ws_cdp.write(row, col, cdpinfo[name][item][cdpfields[col]])
 
                 row = row + 1
-
+                
     # Writes show diag information
     cont = len(diaginfo.keys())
     print(cont, " modules")
@@ -813,6 +835,28 @@ if cont > 0:
                 ws_diag.write(row, col, diaginfo[item][diagfields[col]])
 
             row = row + 1
+
+    # Writes logging information
+    cont = 0
+    for name in loginfo.keys():
+        cont = cont + len(loginfo[name])
+    print(cont, " Logs")
+
+    if cont > 0:
+        ws_log = wb.add_sheet('Logs')
+
+        for i, value in enumerate(logfields):
+            ws_log.write(0, i, value, style_header)
+
+        row = 1
+        for name in loginfo.keys():
+            for item in loginfo[name].keys():
+
+                for col in range(0,len(logfields)):
+
+                    ws_log.write(row, col, loginfo[name][item][logfields[col]])
+
+                row = row + 1
 
     try:
         wb.save(sys.argv[1])
